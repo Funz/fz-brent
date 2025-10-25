@@ -3,6 +3,11 @@
 # Source the Brent algorithm
 source("../.fz/algorithms/brent.R")
 
+# Helper function for separator line
+print_separator <- function() {
+  cat(paste(rep("=", 60), collapse=""), "\n")
+}
+
 # Test 4: Test with root not bracketed initially
 test_not_bracketed <- function() {
   cat("Test 4: Root not bracketed (should fail gracefully)\n")
@@ -27,7 +32,7 @@ test_not_bracketed <- function() {
   
   # Try to iterate
   iter <- 0
-  while (iter < 100) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     X_next <- get_next_design(brent, all_X, all_Y)
     
@@ -80,7 +85,7 @@ test_tight_tolerance <- function() {
   all_Y <- Y
   
   iter <- 0
-  while (iter < 100) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     X_next <- get_next_design(brent, all_X, all_Y)
     
@@ -134,7 +139,7 @@ test_different_varname <- function() {
   all_Y <- Y
   
   iter <- 0
-  while (iter < 100) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     X_next <- get_next_design(brent, all_X, all_Y)
     
@@ -166,9 +171,10 @@ test_different_varname <- function() {
 }
 
 # Run all edge case tests
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 cat("Running Brent Algorithm Edge Case Tests\n")
-cat(paste(rep("=", 60), collapse=""), "\n\n")
+print_separator()
+cat("\n")
 
 results <- c(
   test_not_bracketed(),
@@ -176,12 +182,12 @@ results <- c(
   test_different_varname()
 )
 
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 cat("Edge Case Test Summary:\n")
 cat("  Total tests:", length(results), "\n")
 cat("  Passed:", sum(results), "\n")
 cat("  Failed:", sum(!results), "\n")
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 
 # Exit with appropriate code
 if (all(results)) {

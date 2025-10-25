@@ -4,6 +4,11 @@
 # Source the Brent algorithm
 source("../.fz/algorithms/brent.R")
 
+# Helper function for separator line
+print_separator <- function() {
+  cat(paste(rep("=", 60), collapse=""), "\n")
+}
+
 # Test 1: cos(pi*x) root finding
 # Root should be at x = 0.5
 test_cos_pi <- function() {
@@ -30,9 +35,8 @@ test_cos_pi <- function() {
   all_X <- X
   all_Y <- Y
   
-  max_iter <- 100
   iter <- 0
-  while (iter < max_iter) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     
     # Get next design
@@ -96,9 +100,8 @@ test_poly3 <- function() {
   all_X <- X
   all_Y <- Y
   
-  max_iter <- 100
   iter <- 0
-  while (iter < max_iter) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     
     # Get next design
@@ -161,9 +164,8 @@ test_nonzero_target <- function() {
   all_X <- X
   all_Y <- Y
   
-  max_iter <- 100
   iter <- 0
-  while (iter < max_iter) {
+  while (iter < brent$options$max_iterations) {
     iter <- iter + 1
     
     # Get next design
@@ -203,9 +205,10 @@ test_nonzero_target <- function() {
 }
 
 # Run all tests
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 cat("Running Brent Algorithm Tests\n")
-cat(paste(rep("=", 60), collapse=""), "\n\n")
+print_separator()
+cat("\n")
 
 results <- c(
   test_cos_pi(),
@@ -213,12 +216,12 @@ results <- c(
   test_nonzero_target()
 )
 
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 cat("Test Summary:\n")
 cat("  Total tests:", length(results), "\n")
 cat("  Passed:", sum(results), "\n")
 cat("  Failed:", sum(!results), "\n")
-cat(paste(rep("=", 60), collapse=""), "\n")
+print_separator()
 
 # Exit with appropriate code
 if (all(results)) {
