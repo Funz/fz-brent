@@ -1,14 +1,28 @@
 # fz-brent
 
-Brent's method for 1D root finding, ported to the new fz framework.
+A [Funz](https://github.com/Funz/fz) algorithm plugin implementing **Brent's method for 1D root finding**.
 
-## Description
+Brent's method is a hybrid root-finding algorithm that combines bisection, secant, and inverse quadratic interpolation methods to find a root of a function within a given interval. It provides the best balance between speed and robustness.
 
-This repository contains an implementation of Brent's method for finding roots of 1-dimensional functions. Brent's method is a hybrid root-finding algorithm that combines bisection, secant, and inverse quadratic interpolation methods to find a root of a function within a given interval.
+## Features
 
-* **Author**: Miguel Munoz Zuniga
-* **Type**: Root finding / Inversion
-* **Reference**: [Brent's method - Wikipedia](https://en.wikipedia.org/wiki/Brent%27s_method)
+### Algorithm Interface (R S3 class)
+
+The Brent algorithm implements the standard fz R algorithm interface:
+
+- `Brent(...)`: S3 constructor accepting algorithm-specific options
+- `get_initial_design.Brent(obj, input_variables, output_variables)`: Return 3 initial bracketing points
+- `get_next_design.Brent(obj, X, Y)`: Return next 3 points (a, b, c) or `list()` when converged
+- `get_analysis.Brent(obj, X, Y)`: Return final root-finding analysis
+- `get_analysis_tmp.Brent(obj, X, Y)`: Return intermediate progress
+
+### Algorithm Details
+
+- **Author**: Miguel Munoz Zuniga
+- **Type**: Root finding / Inversion
+- **Reference**: [Brent's method - Wikipedia](https://en.wikipedia.org/wiki/Brent%27s_method)
+- **1D only**: Works with a single input variable
+- **Guaranteed convergence**: When the root is properly bracketed
 
 ## Algorithm Options
 
@@ -19,95 +33,141 @@ This repository contains an implementation of Brent's method for finding roots o
 
 ## Requirements
 
-- R (>= 3.5.0)
-- base64enc package (for HTML visualization)
+- **R** must be installed on your system
+- **rpy2** Python package: `pip install rpy2`
+- **fz** framework: `pip install git+https://github.com/Funz/fz.git`
+
+## Installation
+
+```bash
+pip install git+https://github.com/Funz/fz.git
+pip install rpy2
+```
+
+### Install the Algorithm Plugin
+
+```python
+import fz
+fz.install_algorithm("Brent")
+```
+
+Or from a URL:
+```python
+fz.install_algorithm("https://github.com/Funz/fz-brent")
+```
+
+Or using the CLI:
+```bash
+fz install Brent
+```
 
 ## Usage
 
-The algorithm follows the new fz framework pattern using S3 classes:
+### Without fzd (standalone algorithm testing)
 
-```r
-# Source the algorithm
-source(".fz/algorithms/brent.R")
+You can test the Brent algorithm without any simulation code, using rpy2 directly:
 
-# Define a function to find the root of
-f <- function(x) {
-  cos(pi * x)
-}
+```python
+from rpy2 import robjects
 
-# Create Brent object with options
-brent <- Brent(ytarget = 0.0, ytol = 0.01, xtol = 0.01, max_iterations = 100)
+# Source the R algorithm
+robjects.r.source(".fz/algorithms/brent.R")
+r_globals = robjects.globalenv
 
-# Define input variables (single variable with min/max bounds)
-input_vars <- list(x = c(0, 1))
-output_vars <- "y"
+# Create an instance with custom options
+r_algo = robjects.r["Brent"](ytarget=0.0, ytol=0.01, xtol=0.01, max_iterations=100)
 
-# Get initial design
-X <- get_initial_design(brent, input_vars, output_vars)
+# Define input variable range (1D only)
+r_input_vars = robjects.r('list(x = c(0.0, 1.0))')
+r_output_vars = robjects.StrVector(["y"])
 
-# Evaluate initial points
-Y <- lapply(X, function(point) f(point$x))
-
-# Store all evaluations
-all_X <- X
-all_Y <- Y
-
-# Iterate until convergence
-while (TRUE) {
-  # Get next design
-  X_next <- get_next_design(brent, all_X, all_Y)
-  
-  # Check if finished (empty list means done)
-  if (length(X_next) == 0) {
-    break
-  }
-  
-  # Evaluate new points
-  Y_next <- lapply(X_next, function(point) f(point$x))
-  
-  # Append to all results
-  all_X <- c(all_X, X_next)
-  all_Y <- c(all_Y, Y_next)
-}
-
-# Get final analysis
-analysis <- get_analysis(brent, all_X, all_Y)
-
-# Print results
-cat(analysis$text)
-print(analysis$data)
+# Get initial design (3 bracketing points)
+r_design = r_globals['get_initial_design'](r_algo, r_input_vars, r_output_vars)
+print(f"Initial design: {len(r_design)} points")
 ```
 
-## Input/Output Format
+Or via fz's automatic wrapper:
 
-- **Input**: Single variable with bounds specified as `list(varname = c(min, max))`
-- **Output**: Single numerical value
+```python
+from fz.algorithms import load_algorithm
 
-The algorithm will find the value of the input variable where the function output equals `ytarget`.
+# Load R algorithm (fz handles rpy2 wrapping automatically)
+algo = load_algorithm("Brent", ytarget=0.0, ytol=0.01, xtol=0.01)
 
-## Testing
+# Same Python interface as Python algorithms
+design = algo.get_initial_design({"x": (0.0, 1.0)}, ["y"])
+print(f"Initial design: {len(design)} points")
+```
 
-Run the test suite to validate the implementation:
+### With fzd (coupled with a model)
+
+Use `fz.fzd()` to run the Brent algorithm coupled with a model and calculators:
+
+```python
+import fz
+
+# Install model and algorithm plugins
+fz.install("Model")  # or your model
+fz.install_algorithm("Brent")
+
+# Run iterative root finding
+analysis = fz.fzd(
+    input_path="examples/Model/input.txt",
+    input_variables={"x": "[0;10]"},
+    model="Model",
+    output_expression="result",
+    algorithm="Brent",
+    algorithm_options={"ytarget": 0.0, "ytol": 0.01, "xtol": 0.01},
+    calculators="localhost_Model",
+    analysis_dir="analysis_results"
+)
+
+print(analysis)
+```
+
+## Directory Structure
+
+```
+fz-brent/
+├── .fz/
+│   └── algorithms/
+│       └── brent.R                # R algorithm implementation (S3 class)
+├── .github/
+│   └── workflows/
+│       └── test.yml               # CI workflow (includes R setup)
+├── tests/
+│   ├── test_plugin.py             # Test suite (uses rpy2)
+│   ├── test_brent.R               # Original R tests
+│   └── test_edge_cases.R          # Edge case R tests
+├── examples/
+│   └── basic_usage.R              # R usage example
+├── example_standalone.ipynb       # Notebook: algorithm without fzd
+├── example_with_fzd.ipynb         # Notebook: algorithm with fzd
+├── DOCUMENTATION.md               # Detailed algorithm documentation
+├── LICENSE
+└── README.md
+```
+
+## Running Tests
 
 ```bash
-cd tests
-Rscript test_brent.R
+# Run all Python tests (pytest)
+python -m pytest tests/test_plugin.py -v
+
+# Or run R tests directly
+cd tests && Rscript test_brent.R
+cd tests && Rscript test_edge_cases.R
 ```
 
-The tests include:
-1. Finding the root of `cos(pi*x)` (expected: 0.5)
-2. Finding the root of `((x-0.75)/3)^3` (expected: 0.75)
-3. Finding where `cos(pi*x) = 0.5` (expected: 0.333)
-
-## Migration from Old Framework
-
-This implementation has been ported from the old Funz algorithm framework to the new fz framework. Key changes:
-
-1. **S3 Class Pattern**: Uses standard R S3 classes instead of environment-based objects
-2. **Generic Methods**: Uses `get_initial_design()`, `get_next_design()`, `get_analysis()` instead of standalone functions
-3. **Data Format**: Input/output uses list of named lists instead of matrices
-4. **Visualization**: Uses base64-encoded images in HTML output instead of separate files
+**Note:** Tests require R and rpy2. Tests that need rpy2 will be skipped automatically if it's not available.
 
 ## License
 
 See the [original repository](https://github.com/Funz/algorithm-Brent) for license information.
+
+## Related Links
+
+- [Funz/fz](https://github.com/Funz/fz) - Main framework
+- [Funz/fz-AlgorithmR](https://github.com/Funz/fz-AlgorithmR) - Template for R algorithm plugins
+- [Funz/fz-Algorithm](https://github.com/Funz/fz-Algorithm) - Template for Python algorithm plugins
+- [Funz/algorithm-Brent](https://github.com/Funz/algorithm-Brent) - Original Funz algorithm

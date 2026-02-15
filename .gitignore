@@ -1,22 +1,29 @@
-# R specific
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# R
 .Rhistory
+.Rdata
 .RData
-.Rproj.user
+.Rproj.user/
 *.Rproj
 
-# Temporary files
-*.tmp
-*.log
-*.png
-*.pdf
+# Jupyter
+.ipynb_checkpoints/
 
-# System files
+# fz results
+analysis_*/
+results/
+
+# OS
 .DS_Store
 Thumbs.db
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
